@@ -3,12 +3,6 @@ import maya.cmds as cmds
 import random
 import math
 
-roofTiles = RoofTiles()
-roofTiles.ExposeDistanceRange = [1.2,2.5]
-roofTiles.RotateYRange = [-2,2]
-roofTiles.CreateTiles()
-roofTiles.Simulate()
-
 class Vec3:
     x = 0
     y = 0
