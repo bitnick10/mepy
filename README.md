@@ -1,0 +1,2 @@
+# mepy
+maya scripts
