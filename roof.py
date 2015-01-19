@@ -56,10 +56,11 @@ class Tile:
     	return 
 
 class Roof:
+    PolygonName = "roof"
     Vertexs = []
     outOffset = 0
     def __init__(self):
-        positions = self.GetVertexsPos("roofShape")
+        positions = self.GetVertexsPos(PolygonName + "Shape")
         positions.sort(key = lambda v:v.x)
         positions = positions[:len(positions)/2]
         positions.sort(key = lambda v:v.z,reverse = True)
@@ -67,6 +68,10 @@ class Roof:
         # vertexs.sort(key = lambda v:(v.x,v.z))
         for i in range(len(self.Vertexs)):
             print i, self.Vertexs[i].ToString()
+
+    # not finished
+    def get_direction(self, points):
+        positions.sort(key = lambda v:v.y)
 
     def GetNearestVertex(self, pos, tile):
         # out of the roof top 
