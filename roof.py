@@ -55,19 +55,25 @@ class Tile:
     def GetTileName(self,x,y):
     	return 
 
-class Roof:
-    PolygonName = "roof"
+class Polygon:
+    Name = ""
+    def __init__(self):
+        pass
+
+class Roof(Polygon):
     Vertexs = []
     outOffset = 0
     def __init__(self):
-        positions = self.GetVertexsPos(PolygonName + "Shape")
+        Polygon.__init__(self)
+        self.Name = "roof"
+        positions = self.GetVertexsPos(self.Name + "Shape")
         positions.sort(key = lambda v:v.x)
         positions = positions[:len(positions)/2]
         positions.sort(key = lambda v:v.z,reverse = True)
         self.Vertexs = positions
         # vertexs.sort(key = lambda v:(v.x,v.z))
-        for i in range(len(self.Vertexs)):
-            print i, self.Vertexs[i].ToString()
+        # for i in range(len(self.Vertexs)):
+        #     print i, self.Vertexs[i].ToString()
 
     # not finished
     def get_direction(self, points):
@@ -120,8 +126,8 @@ class Roof:
 class RoofTiles:
     roof = Roof()
     tileInfo = Tile()
-    columnLen = 25
-    rowLen = 20
+    ColumnLen = 20
+    RowLen = 1
     currentTime = 0
     ExposeDistanceRange = [0,0]
     RotateYRange = [0,0]
@@ -130,7 +136,7 @@ class RoofTiles:
 
     def create_one_column_tiles(self,columnNum,offsetX):
         positions = []
-        for i in range(self.columnLen):
+        for i in range(self.ColumnLen):
             tile = Tile()
             tile.row = i + 1
             tile.column = columnNum
@@ -150,19 +156,19 @@ class RoofTiles:
             tile.CreateAt(p,rotateY)
 
     def CreateTiles(self):
-        for i in range(self.rowLen):
+        for i in range(self.RowLen):
         # for i in range(2):
             self.create_one_column_tiles(i + 1, TileInfo.width * 1.5)
 
     def CreatePassiveRigidBody(self, rNum):
-        for i in range(self.rowLen):
+        for i in range(self.RowLen):
             n = i + 1
             name = self.get_tile_name(rNum,n)
             mel.eval("select -r " + name);
             mel.eval("rigidBody -passive -m 1 -dp 0 -sf 1 -df 1 -b 0 -l 0 -tf 200 -iv 0 0 0 -iav 0 0 0 -c 0 -pc 0 -i 0 0 0 -imp 0 0 0 -si 0 0 0 -sio none")
     
     def CreateHingeConstrain(self, rNum):
-        for i in range(self.rowLen):
+        for i in range(self.RowLen):
             n = i + 1
             name = self.get_tile_name(rNum,n)
             mel.eval("connectDynamic - f gravityField1 " + name) 
@@ -172,14 +178,14 @@ class RoofTiles:
             mel.eval("move - r 0 0 " + str(move_z))
 
     def RemoveRigidBodyTowRow(self, rNum):
-        for i in range(self.rowLen):
+        for i in range(self.RowLen):
             n = i + 1
             tileName = self.get_tile_name(rNum,n)
             rigidBodyName = self.get_rigidbody_name(n, True)
             mel.eval("select - r " + tileName )
             mel.eval("delete " + rigidBodyName)
             mel.eval("delete rigidHingeConstraint" + str(n))
-        for i in range(self.rowLen):
+        for i in range(self.RowLen):
             n = i + 1
             tileName = self.get_tile_name(rNum + 1,n)
             rigidBodyName = self.get_rigidbody_name(n, False)
@@ -191,26 +197,46 @@ class RoofTiles:
         mel.eval("currentTime " + str(self.currentTime));
 
     def Simulate(self):
+        print "Simulate Begin"
         mel.eval("currentTime 1");
         mel.eval("gravity - pos 0 0 0 - m 9.8 - att 0 - dx 0 - dy - 1 - dz 0  - mxd - 1  - vsh none - vex 0 - vof 0 0 0 - vsw 360 - tsr 0.5")
         mel.eval('setAttr "gravityField1.magnitude" 100')
-        for i in range(1,self.columnLen):
+        for i in range(1,self.ColumnLen):
             self.CreatePassiveRigidBody(i)
             self.CreateHingeConstrain(i+1)
             self.SimulateTileFall()
             self.RemoveRigidBodyTowRow(i)
         mel.eval("delete gravityField1")
 
+    def CreateBelowTile(self):
+        for i in range(self.RowLen * self.ColumnLen ):
+            n = i + 1
+            objectName = "tile" + str(n)
+            x = cmds.getAttr(objectName + ".translateX")
+            y = cmds.getAttr(objectName + ".translateY")
+            z = cmds.getAttr(objectName + ".translateZ")
+            translate = Vec3(x,y,z)
+            rotateX = cmds.getAttr(objectName + ".rotateX")
+            rotateY = cmds.getAttr(objectName + ".rotateY")
+            rotateZ = cmds.getAttr(objectName + ".rotateZ")
+            tile = Tile()
+            tile.Create()
+            rotateX *= -1
+            translate.y -= TileInfo.height * 2
+            translate.x -= TileInfo.width * (2.0 / 3)
+            mel.eval("rotate -r -os " + str(rotateX) + " 0 180")
+            mel.eval("move -r " + translate.ToString())
+
     def get_rigidbody_name(self, cNum, isFirstRow):
         name = "rigidBody"
         if isFirstRow:
             return name + str(cNum)
         else:
-            return name + str(cNum + self.rowLen)
+            return name + str(cNum + self.RowLen)
 
     def get_tile_name(self, r, c):
         cc = c - 1
-        suffix = r + cc * self.columnLen
+        suffix = r + cc * self.ColumnLen
         name = "tile" + str(suffix)
         return name
 
