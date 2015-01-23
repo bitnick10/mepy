@@ -3,7 +3,7 @@ import maya.cmds as cmds
 from Vec3 import Vec3
 from Node import Node
 
-class Polygon(Node):
+class Transform(Node):
     def __init__(self):
         pass
 

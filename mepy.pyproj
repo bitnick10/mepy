@@ -21,14 +21,20 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Node.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Polygon.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Tile.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Vec3.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="mepy.py" />
-    <Compile Include="roof.py" />
+    <Compile Include="TileWorker.py" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

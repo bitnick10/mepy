@@ -60,7 +60,7 @@ class TileWorker:
     roof = Roof()
     tileInfo = Tile()
     NumberOfTileY = 0
-    NumberOfTileX  = 0
+    NumberOfTileX = 0
     currentTime = 0
     ExposeDistanceRange = [0,0]
     RotateYRange = [0,0]
@@ -87,9 +87,9 @@ class TileWorker:
             n = i + 1
             tile = Tile()
             rotateY = random.uniform(self.RotateYRange[0],self.RotateYRange[1])
-            tile.Translate = p
+            tile.Transform.Translate = p
             tile.Rotate = Vec3(0,rotateY,0)
-            tile.Rename("tile{0}_{1}".format(xn,n))
+            tile.Transform.Rename("tile{0}_{1}".format(xn,n))
 
     def CreateTiles(self):
         for i in range(self.NumberOfTileX):
@@ -135,22 +135,23 @@ class TileWorker:
         mel.eval("delete gravityField1")
 
     def CreateBelowTile(self):
-        for i in range(self.RowLen * self.ColumnLen):
-            n = i + 1
-            objectName = "tile" + str(n)
-            x = cmds.getAttr(objectName + ".translateX")
-            y = cmds.getAttr(objectName + ".translateY")
-            z = cmds.getAttr(objectName + ".translateZ")
-            translate = Vec3(x,y,z)
-            rotateX = cmds.getAttr(objectName + ".rotateX")
-            rotateY = cmds.getAttr(objectName + ".rotateY")
-            rotateZ = cmds.getAttr(objectName + ".rotateZ")
-            tile = Tile()
-            rotateX *= -1
-            translate.y -= TileInfo.height * 2
-            translate.x -= TileInfo.width * (2.0 / 3)
-            mel.eval("rotate -r -os " + str(rotateX) + " 0 180")
-            mel.eval("move -r " + translate.ToString())
+        for x in range(1,self.NumberOfTileX + 1):
+            for y in range(1,self.NumberOfTileY + 1):
+                objectName = self.get_tile_name(x,y)
+                print x,y,objectName
+                tx = cmds.getAttr(objectName + ".translateX")
+                ty = cmds.getAttr(objectName + ".translateY")
+                tz = cmds.getAttr(objectName + ".translateZ")
+                translate = Vec3(tx,ty,tz)
+                rotateX = cmds.getAttr(objectName + ".rotateX")
+                rotateY = cmds.getAttr(objectName + ".rotateY")
+                rotateZ = cmds.getAttr(objectName + ".rotateZ")
+                tile = Tile()
+                rotateX *= -1
+                translate.y -= TileInfo.height * 2
+                translate.x -= TileInfo.width * (2.0 / 3)
+                mel.eval("rotate -r -os " + str(rotateX) + " 0 180")
+                mel.eval("move -r " + translate.ToString())
 
     def get_rigidbody_name(self, xNum, isFirstRow):
         name = "rigidBody"
@@ -160,6 +161,6 @@ class TileWorker:
             return name + str(xNum + self.NumberOfTileY)
 
     def get_tile_name(self, x, y):
-        name =  "tile{0}_{1}".format(x,y)
+        name = "tile{0}_{1}".format(x,y)
         return name
 
