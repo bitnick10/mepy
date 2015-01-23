@@ -4,20 +4,53 @@ import random
 import math
 
 from Vec3 import Vec3
-from Polygon import Polygon
+from Transform import Transform
+from Mesh import Mesh
 from Tile import Tile
 
-class TileInfo:
-    length = 3.2 # maya
-    width = 2.4  # from AI
-    height = 0.8 # from AI
-class Roof(Polygon):
+class SourceTileInfo:
+    length = 0# 3.2 # maya
+    width = 0#2.4 # from AI
+    height = 0#0.8 # from AI
+    def __init__(self):
+        print "tile info init"
+        mesh = Mesh()
+        mesh.Name = "tile" + "Shape"
+        vertexs = mesh.GetVertexsPos()
+        listX = []
+        listY = []
+        listZ = []
+        for v in vertexs:
+            listX.append(v.x)
+            listY.append(v.y)
+            listZ.append(v.z)
+        
+        self.length = max(listZ) - min(listZ)
+        self.height = max(listY) - min(listY)
+        self.width = max(listX) - min(listX)
+
+        print "Tile Length={0},Width={1},Height={2}".format(self.length, self.width, self.height)
+
+TileInfo = SourceTileInfo()
+
+class Roof:
+    transform = Transform()
+
+    @property
+    def Transform(self):
+        return self.transform
+
+    @Transform.setter
+    def Transform(self,value):
+        transform = value
+
     Vertexs = []
     outOffset = 0
     def __init__(self):
-        Polygon.__init__(self)
-        self.Name = "roof"
-        positions = self.GetVertexsPos()
+        self.Transform.Name = "roof"
+        mesh = Mesh()
+        mesh.Name = self.Transform.Name + "Shape"
+        positions = mesh.GetVertexsPos()
         positions.sort(key = lambda v:v.x)
         positions = positions[:len(positions) / 2]
         positions.sort(key = lambda v:v.z,reverse = True)
@@ -58,7 +91,6 @@ class Roof(Polygon):
 
 class TileWorker:
     roof = Roof()
-    tileInfo = Tile()
     NumberOfTileY = 0
     NumberOfTileX = 0
     currentTime = 0
@@ -67,7 +99,24 @@ class TileWorker:
     def __init__(self):
         pass
 
-    def create_one_column_tiles(self,xn,offsetX):
+    def DuplicateTile(self):
+        for x in range(1,self.NumberOfTileX + 1):
+            for y in range(1,self.NumberOfTileY + 1):
+                tile = Tile()
+                pos = Vec3(x * TileInfo.width * 1.5,0,-y * TileInfo.length * 1.5)
+                tile.Transform.Translate = pos
+                tile.Transform.Rename(self.get_tile_name(x,y))
+
+    #def PaintTile(self):
+    #    names = ""
+    #    for n in range(1,self.NumberOfTileX * self.NumberOfTileY + 1):
+    #        names += "tile" + str(n) + " "
+    #    print names
+    #    mel.eval("polyUnite - ch 1 - mergeUVSets 0 - name tileCombine " +
+    #    names)
+    #    mel.eval("delete " + names)
+
+    def layout_one_column_tiles(self,xn,offsetX):
         positions = []
         for i in range(self.NumberOfTileY):
             #tile = Tile()
@@ -84,17 +133,17 @@ class TileWorker:
             pos.x += (xn - 1) * offsetX
             positions.append(pos)
         for i,p in enumerate(positions):
-            n = i + 1
-            tile = Tile()
+            y = i + 1
+            tileTransform = Transform()
+            tileTransform.Name = self.get_tile_name(xn,y)
             rotateY = random.uniform(self.RotateYRange[0],self.RotateYRange[1])
-            tile.Transform.Translate = p
-            tile.Rotate = Vec3(0,rotateY,0)
-            tile.Transform.Rename("tile{0}_{1}".format(xn,n))
+            tileTransform.Translate = p
+            tileTransform.Rotate = Vec3(0,rotateY,0)
 
-    def CreateTiles(self):
+    def LayoutTiles(self):
         for i in range(self.NumberOfTileX):
         # for i in range(2):
-            self.create_one_column_tiles(i + 1, TileInfo.width * 1.5)
+            self.layout_one_column_tiles(i + 1, TileInfo.width * 1.5)
 
     def CreatePassiveRigidBody(self, yNum):
         for i in range(self.NumberOfTileX):
@@ -113,8 +162,8 @@ class TileWorker:
             move_z = 0.5 * TileInfo.length * -1 
             mel.eval("move - r 0 0 " + str(move_z))
 
-    def RemoveAllRigidBody(self):
-        names = mel.eval("ls -type rigidBody")
+    def RemoveAllByType(self,typeName):
+        names = mel.eval("ls -type " + typeName)
         for name in names:
             mel.eval("delete " + name)
 
@@ -131,14 +180,15 @@ class TileWorker:
             self.CreatePassiveRigidBody(i)
             self.CreateHingeConstrain(i + 1)
             self.SimulateTileFall()
-            self.RemoveAllRigidBody()
+            self.RemoveAllByType("rigidBody")
+            self.RemoveAllByType("rigidConstraint")
         mel.eval("delete gravityField1")
 
     def CreateBelowTile(self):
         for x in range(1,self.NumberOfTileX + 1):
             for y in range(1,self.NumberOfTileY + 1):
                 objectName = self.get_tile_name(x,y)
-                print x,y,objectName
+                #print x,y,objectName
                 tx = cmds.getAttr(objectName + ".translateX")
                 ty = cmds.getAttr(objectName + ".translateY")
                 tz = cmds.getAttr(objectName + ".translateZ")
@@ -152,13 +202,6 @@ class TileWorker:
                 translate.x -= TileInfo.width * (2.0 / 3)
                 mel.eval("rotate -r -os " + str(rotateX) + " 0 180")
                 mel.eval("move -r " + translate.ToString())
-
-    def get_rigidbody_name(self, xNum, isFirstRow):
-        name = "rigidBody"
-        if isFirstRow:
-            return name + str(xNum)
-        else:
-            return name + str(xNum + self.NumberOfTileY)
 
     def get_tile_name(self, x, y):
         name = "tile{0}_{1}".format(x,y)
