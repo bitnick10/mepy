@@ -21,10 +21,13 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Mesh.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Node.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Polygon.py">
+    <Compile Include="Transform.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Tile.py">
