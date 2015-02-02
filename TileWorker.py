@@ -8,41 +8,16 @@ from Transform import Transform
 from Mesh import Mesh
 from Tile import Tile
 
-class SourceTileInfo:
-    length = 0# 3.2 # maya
-    width = 0#2.4 # from AI
-    height = 0#0.8 # from AI
-    def __init__(self):
-        print "Tile Info Init"
-        mesh = Mesh()
-        mesh.Name = "tile" + "Shape"
-        vertexs = mesh.GetVertexsPos()
-        listX = []
-        listY = []
-        listZ = []
-        for v in vertexs:
-            listX.append(v.x)
-            listY.append(v.y)
-            listZ.append(v.z)
-        
-        self.length = max(listZ) - min(listZ)
-        self.height = max(listY) - min(listY)
-        self.width = max(listX) - min(listX)
-
-        print "Tile Length={0},Width={1},Height={2}".format(self.length, self.width, self.height)
-
-TileInfo = SourceTileInfo()
-
 class Roof:
-    transform = Transform()
+    _transform = Transform()
 
     @property
     def Transform(self):
-        return self.transform
+        return self._transform
 
     @Transform.setter
     def Transform(self,value):
-        transform = value
+        self._transform = value
 
     Vertexs = []
     outOffset = 0
@@ -63,12 +38,12 @@ class Roof:
     def get_direction(self, points):
         positions.sort(key = lambda v:v.y)
 
-    def GetNearestVertex(self, pos):
+    def GetNearestVertex(self, pos, tileLength):
         # out of the roof top
         topVertex = self.Vertexs[len(self.Vertexs) - 1]
-        if (topVertex.z > pos.z or topVertex.DistanceYZ(pos) < TileInfo.length):
+        if (topVertex.z > pos.z or topVertex.DistanceYZ(pos) < tileLength):
             ret = self.Vertexs[len(self.Vertexs) - 1].GetOneCopy()
-            self.outOffset += TileInfo.length * 1.5
+            self.outOffset += tileLength * 1.5
             ret.z -= self.outOffset
             return ret
         self.outOffset = 0
@@ -77,12 +52,12 @@ class Roof:
             if v.z < pos.z:
                 distances.append(pos.DistanceYZ(v))
             else:
-                distances.append(TileInfo.length * 999) # this should be very max
+                distances.append(tileLength * 999) # this should be very max
             
             # print "pos=",pos.ToString(),"v=",v.ToString(),"d="
             # ,pos.DistanceYZ(v),"tile=",tile.length
         for i in range(len(distances)):
-            distances[i] -= TileInfo.length
+            distances[i] -= tileLength
             if distances[i] < 0:
                 distances[i] *= -1
         i = distances.index(min(distances))
@@ -98,24 +73,18 @@ class TileWorker:
     ExposeDistanceRange = [0,0]
     RotateYRange = [0,0]
     def __init__(self):
-        self.TileXSpace = 0.5
+        self.UpperTileType = "Normal"
+        self.SourceUpperTile = Tile()
+        if self.UpperTileType == "Normal":
+            self.TileXSpace = 0.5
 
     def DuplicateTile(self):
         for x in range(1,self.NumberOfTileX + 1):
             for y in range(1,self.NumberOfTileY + 1):
-                tile = Tile()
-                pos = Vec3(x * TileInfo.width * 1.5,0,-y * TileInfo.length * 1.5)
-                tile.Transform.Translate = pos
-                tile.Transform.Rename(self.get_tile_name(x,y))
-
-    #def PaintTile(self):
-    #    names = ""
-    #    for n in range(1,self.NumberOfTileX * self.NumberOfTileY + 1):
-    #        names += "tile" + str(n) + " "
-    #    print names
-    #    mel.eval("polyUnite - ch 1 - mergeUVSets 0 - name tileCombine " +
-    #    names)
-    #    mel.eval("delete " + names)
+                newTile = self.SourceUpperTile.Duplicate()
+                pos = Vec3(x * self.SourceUpperTile.GetWidth() * 1.5,0,-y * self.SourceUpperTile.GetLength() * 1.5)
+                newTile.Transform.Translate = pos
+                newTile.Transform.Rename(self.get_tile_name(x,y))
 
     def layout_one_column_tiles(self,xn,offsetX):
         positions = []
@@ -128,9 +97,9 @@ class TileWorker:
             else :
                 contact = positions[i - 1].GetOneCopy()
                 exposeDistance = random.uniform(self.ExposeDistanceRange[0],self.ExposeDistanceRange[1])
-                contact.z += TileInfo.length - exposeDistance
+                contact.z +=self.SourceUpperTile.GetLength() - exposeDistance
             # print positions[i - 1].ToString()," contact ",contact.ToString()
-            pos = self.roof.GetNearestVertex(contact).GetOneCopy()
+            pos = self.roof.GetNearestVertex(contact,self.SourceUpperTile.GetLength()).GetOneCopy()
             pos.x += (xn - 1) * offsetX
             positions.append(pos)
         for i,p in enumerate(positions):
@@ -144,7 +113,7 @@ class TileWorker:
     def LayoutTiles(self):
         for i in range(self.NumberOfTileX):
         # for i in range(2):
-            self.layout_one_column_tiles(i + 1, TileInfo.width * (1 + self.TileXSpace))
+            self.layout_one_column_tiles(i + 1, self.SourceUpperTile.GetWidth() * (1 + self.TileXSpace))
 
     def CreatePassiveRigidBody(self, yNum):
         for i in range(self.NumberOfTileX):
@@ -160,7 +129,7 @@ class TileWorker:
             mel.eval("connectDynamic - f gravityField1 " + name) 
             mel.eval("select -r " + name)
             mel.eval("constrain - hinge - o 0 90 0")
-            move_z = 0.5 * TileInfo.length * -1 
+            move_z = 0.5 * self.SourceUpperTile.GetLength() * -1 
             mel.eval("move - r 0 0 " + str(move_z))
 
     def RemoveAllByType(self,typeName):
@@ -184,6 +153,7 @@ class TileWorker:
             self.RemoveAllByType("rigidBody")
             self.RemoveAllByType("rigidConstraint")
         mel.eval("delete gravityField1")
+        self.SourceUpperTile.PrintInfo()
 
     def CreateBelowTile(self):
         for x in range(1,self.NumberOfTileX + 1):
@@ -201,19 +171,19 @@ class TileWorker:
                 rotateX *= -1
                 # Those data is generated by try
                 if(y == 1):
-                    translate.y -= TileInfo.height * 1.6
-                    translate.z -= TileInfo.length * 0.2
-                elif(y==2):
-                    translate.y -= TileInfo.height * 2.0
-                elif(y==3):
-                    translate.y -= TileInfo.height * 2.1
+                    translate.y -= self.SourceUpperTile.GetHeight() * 1.6
+                    translate.z -= self.SourceUpperTile.GetLength() * 0.2
+                elif(y == 2):
+                    translate.y -= self.SourceUpperTile.GetHeight() * 2.0
+                elif(y == 3):
+                    translate.y -= self.SourceUpperTile.GetHeight() * 2.1
                 else:
-                    translate.y -= TileInfo.height * 2.2
-                translate.x -= TileInfo.width * (1 - 0.5 * self.TileXSpace)
+                    translate.y -= self.SourceUpperTile.GetHeight() * 2.2
+                translate.x -= self.SourceUpperTile.GetWidth() * (1 - 0.5 * self.TileXSpace)
                 mel.eval("rotate -r -os " + str(rotateX) + " 0 180")
                 mel.eval("move -r " + translate.ToString())
 
     def get_tile_name(self, x, y):
-        name = "tile{0}_{1}".format(x,y)
+        name = "{0}{1}_{2}".format(self.SourceUpperTile.Transform.Name,x,y)
         return name
 
