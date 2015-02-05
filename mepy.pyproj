@@ -27,6 +27,12 @@
     <Compile Include="Node.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Roof.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="TongRoofWorker.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Transform.py">
       <SubType>Code</SubType>
     </Compile>
@@ -38,6 +44,7 @@
     </Compile>
     <Compile Include="mepy.py" />
     <Compile Include="TileWorker.py" />
+    <Compile Include="__init__.py" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

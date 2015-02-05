@@ -9,7 +9,11 @@ class Transform(Node):
 
     @property
     def Translate(self):
-        return Vec3(0,0,0)
+        v = Vec3(0,0,0)
+        v.x=self.get_attr("translateX")
+        v.y=self.get_attr("translateY")
+        v.z=self.get_attr("translateZ")
+        return v
 
     @Translate.setter
     def Translate(self,value):
@@ -19,12 +23,15 @@ class Transform(Node):
 
     @property
     def Rotate(self):
-        pass
+        print "not impl"
 
     @Rotate.setter
     def Rotate(self,value):
         mel.eval("select - r " + self.Name)
         mel.eval("rotate -r -os " + value.ToString())
+
+    def get_attr(self,attrName):
+        return mel.eval("getAttr {0}.{1}".format(self.Name,attrName))
 
     def set_attr(self,attrName,attrValue):
         mel.eval("setAttr {0}.{1} {2}".format(self.Name,attrName,attrValue))

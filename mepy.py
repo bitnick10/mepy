@@ -1,5 +1,6 @@
 import sys
 import os
+import math
 
 def CleanCacheModules():
     filenames = os.listdir("E:\\My\\Github\\mepy")
