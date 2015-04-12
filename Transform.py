@@ -34,4 +34,9 @@ class Transform(Node):
         return mel.eval("getAttr {0}.{1}".format(self.Name,attrName))
 
     def set_attr(self,attrName,attrValue):
+        self.check_name()
         mel.eval("setAttr {0}.{1} {2}".format(self.Name,attrName,attrValue))
+
+    def check_name(self):
+        if self.Name=="":
+            print("please name first")
