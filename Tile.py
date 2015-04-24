@@ -3,17 +3,25 @@ import maya.cmds as cmds
 from Transform import Transform
 from Mesh import Mesh
 
-class Tile:
+class Tile(object):
     @property
     def Transform(self):
-        return self._transform
+        return self.transform
 
     @Transform.setter
     def Transform(self,value):
-        self._transform = value
+        self.transform = value
+
+    @property
+    def Name(self):
+        return self.Transform.Name
+
+    @Name.setter
+    def Name(self,value):
+        self.Transform.Name = value
     
     def __init__(self):
-        self._transform = Transform()
+        self.transform = Transform()
         self._length = 0
         self._height = 0
         self._width = 0
