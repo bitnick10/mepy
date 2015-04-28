@@ -32,7 +32,14 @@ class TongRoofWorker(object):
             pos.z += self.SourceTile.GetLength()
             newTile.Transform.Translate = pos
 
-    #def DuplicateAndLayoutDrippingTile(self):
+    def DuplicateAndLayoutDrippingTile(self):
+        for x in range(1, self.NumberOfTileX + 1):
+            newTile = self.DrippingTile.Duplicate()
+            tileTransform = Transform()
+            tileTransform.Name = self.get_tile_name(x,1)
+            pos = tileTransform.Translate.GetOneCopy();
+            pos.z += self.SourceTile.GetLength()
+            newTile.Transform.Translate = pos
 
     def get_tile_name(self, x, y):
         name = "{0}{1}_{2}".format(self.SourceTile.Name,x,y)
