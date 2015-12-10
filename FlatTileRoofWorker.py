@@ -7,29 +7,34 @@ from Vec3 import Vec3
 from Transform import Transform
 from Mesh import Mesh
 from Tile import Tile
+from Roof import Roof
 
 class TileWorker:
-    roof = Roof()
-    TileXSpace = 0 # percentage of tile width
-    NumberOfTileY = 0
-    NumberOfTileX = 0
-    currentTime = 0
-    ExposeDistanceRange = [0,0]
-    RotateYRange = [0,0]
+    printDebugInfo = True
+
     def __init__(self):
         self.SourceUpperTile = Tile()
-        if self.UpperTileType == "Normal":
-            self.TileXSpace = 0.5
+        self.roof = Roof()
+        self.TileXSpace = 0  # percentage of tile width
+        self.NumberOfTileY = 0
+        self.NumberOfTileX = 0
+        self.currentTime = 0
+        self.ExposeDistanceRange = [0, 0]
+        self.RotateYRange = [0, 0]
+        # if self.UpperTileType == "Normal":
+        #     self.TileXSpace = 0.5
 
     def DuplicateTile(self):
-        for x in range(1,self.NumberOfTileX + 1):
-            for y in range(1,self.NumberOfTileY + 1):
-                newTile = self.SourceUpperTile.Duplicate()
-                pos = Vec3(x * self.SourceUpperTile.GetWidth() * 1.5,0,-y * self.SourceUpperTile.GetLength() * 1.5)
-                newTile.Transform.Translate = pos
-                newTile.Transform.Rename(self.get_tile_name(x,y))
+        for x in range(1, self.NumberOfTileX + 1):
+            for y in range(1, self.NumberOfTileY + 1):
+                new_tile = self.SourceUpperTile.Duplicate()
+                pos = Vec3(x * self.SourceUpperTile.GetWidth() * 1.5, 0, -y * self.SourceUpperTile.GetLength() * 1.5)
+                new_tile.Transform.Translate = pos
+                # if printDebugInfo == True
+                #     print("a")
+                new_tile.Transform.Rename(self.get_tile_name(x, y))
 
-    def layout_one_column_tiles(self,xn,offsetX):
+    def layout_one_column_tiles(self, xn, offsetX):
         positions = []
         for i in range(self.NumberOfTileY):
             #tile = Tile()
@@ -127,6 +132,6 @@ class TileWorker:
                 mel.eval("move -r " + translate.ToString())
 
     def get_tile_name(self, x, y):
-        name = "{0}{1}_{2}".format(self.SourceUpperTile.Transform.Name,x,y)
+        name = "{0}{1}_{2}".format(self.SourceUpperTile.Transform.Name, x, y)
         return name
 

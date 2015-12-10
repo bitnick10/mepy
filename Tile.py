@@ -9,7 +9,7 @@ class Tile(object):
         return self.transform
 
     @Transform.setter
-    def Transform(self,value):
+    def Transform(self, value):
         self.transform = value
 
     @property
@@ -17,7 +17,7 @@ class Tile(object):
         return self.Transform.Name
 
     @Name.setter
-    def Name(self,value):
+    def Name(self, value):
         self.Transform.Name = value
     
     def __init__(self):

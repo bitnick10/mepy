@@ -1,6 +1,5 @@
 import sys
 import os
-import math
 
 def CleanCacheModules(dir):
     filenames = os.listdir(dir)

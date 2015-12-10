@@ -9,7 +9,7 @@ class Roof:
         return self._transform
 
     @Transform.setter
-    def Transform(self,value):
+    def Transform(self, value):
         self._transform = value
 
     Vertexs = []
